@@ -1,0 +1,35 @@
+version: '3.7'
+
+services:
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false 
+    ports: 
+      - 9200:9200
+    volumes: 
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:8.10.1  # Ändern Sie dies entsprechend der Version, die Sie verwenden möchten
+    container_name: metricbeat
+    user: root
+    volumes:
+      - ./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
+      - ./prometheus.yml:/usr/share/metricbeat/modules.d/prometheus.yml
+    command: metricbeat -e -strict.perms=false  # `-e` für Logging auf Stdout und `-strict.perms=false` wegen Problemen mit den Berechtigungen in Docker
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:8.10.1
+    ports:  
+      - 5601:5601
+    depends_on: 
+      - elasticsearch
+
+volumes:  
+  elasticsearch-data: 
